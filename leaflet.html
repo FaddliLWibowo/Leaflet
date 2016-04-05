@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css" />
+        <script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
+        <link rel="stylesheet" href="leaflet.css" />
+        
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+        <script src="mqtt.js"></script>
+        <script>
+
+            var wsbroker = "test.mosquitto.org";  //mqtt websocket enabled broker
+            var wsport = 8080 // port for above
+            var client = new Paho.MQTT.Client(wsbroker, wsport,
+                    "myclientid_" + parseInt(Math.random() * 100, 10));
+            client.onConnectionLost = function (responseObject) {
+                console.log("connection lost: " + responseObject.errorMessage);
+            };
+            client.onMessageArrived = function (message) {
+                console.log(message.destinationName, ' -- ', message.payloadString);
+                updateMap(message.payloadString);
+            };
+            var options = {
+                timeout: 3,
+                onSuccess: function () {
+                    console.log("mqtt connected");
+                    // Connection succeeded; subscribe to our topic, you can add multile lines of these
+                    client.subscribe('/World', {qos: 1});
+
+                    //use the below if you want to publish to a topic on connect
+                    message = new Paho.MQTT.Message("63.4304900, 10.3950600");
+                    message.destinationName = "/World";
+                    client.send(message);
+
+                },
+                onFailure: function (message) {
+                    console.log("Connection failed: " + message.errorMessage);
+                }
+            };
+            function init() {
+                client.connect(options);
+            }
+            function subscribeTo(subscribe){
+                client.subscribe(subscribe,{qos: 2});
+                console.log("Subscribed to: "+subscribe);
+            }
+            function publish(message){
+                message = new Paho.MQTT.Message(message);
+                    message.destinationName = "/World";
+                    client.send(message);
+                    console.log("Message sent: "+message);
+                    
+            }
+            function updateMap(koordinates){
+                var liste =  koordinates.split(",");
+                var popup = L.popup();
+            
+                popup
+                        .setLatLng(liste)
+                        .setContent("Message recieved")
+                        .openOn(map);
+            }
+        </script>
+
+
+    </head>
+    <body>
+
+        <div>
+            <button onclick="init()">1. Connect</button>
+            <button onclick="subscribeTo('/World')">Subscribe</button>
+            <button onclick="publish('63.4304900, 10.3950600')">3. Publish</button>
+            <button onclick="client.disconnect();">(4. Disconnect)</button>
+            
+        </div>
+        <div id="map"></div>
+        <script>
+        
+            var map = L.map('map').setView([63.4304900, 10.3950600], 13);
+
+            L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+
+
+
+
+            var popup = L.popup();
+
+            function onMapClick(e) {
+                popup
+                        .setLatLng(e.latlng)
+                        .setContent("You clicked the map at " + e.latlng.toString())
+                        .openOn(map);
+            }
+
+            map.on('click', onMapClick);
+    </script>
+        
+        
+    </body>
+    
+
+</html>

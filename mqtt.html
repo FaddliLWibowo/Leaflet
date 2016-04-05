@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+        <script src="mqtt.js"></script>
+        <script>
+            // Create a client instance
+            client = new Paho.MQTT.Client('iot.eclipse.org', Number(1883), "clientId");
+
+// set callback handlers
+            client.onConnectionLost = onConnectionLost;
+            client.onMessageArrived = onMessageArrived;
+
+// connect the client
+            client.connect({onSuccess: onConnect});
+
+
+// called when the client connects
+            function onConnect() {
+                // Once a connection has been made, make a subscription and send a message.
+                alert("Connected");
+                console.log("onConnect");
+                client.subscribe("testing123");
+                message = new Paho.MQTT.Message("Hello");
+                message.destinationName = "testing123";
+                client.send(message);
+            }
+
+// called when the client loses its connection
+            function onConnectionLost(responseObject) {
+                alert("Connection lost");
+                if (responseObject.errorCode !== 0) {
+                    console.log("onConnectionLost:" + responseObject.errorMessage);
+                    
+                }
+            }
+
+// called when a message arrives
+            function onMessageArrived(message) {
+                alert(message.payloadString);
+                console.log("onMessageArrived:" + message.payloadString);
+            }
+            function updateMap(koordinates){
+                
+            }
+        </script>
+    </head>
+    <body>
+        <div>TODO write content</div>
+        <div>
+            <button onclick="client.connect(options);">1. Connect</button>
+            <button onclick="client.subscribe('testtopic/#', {qos: 2});
+                    alert('Subscribed');">2. Subscribe</button>
+            <button onclick="publish('Hello Foo !', 'testtopic/bar', 2);">3. Publish</button>
+            <button onclick="client.disconnect();">(4. Disconnect)</button>
+            <div id="messages"></div>
+            <textarea rows="4" cols="50">
+            At w3schools.com you will learn how to make a website. We offer free tutorials in all web development technologies. 
+            </textarea>
+        </div>
+
+    </body>
+</html>
